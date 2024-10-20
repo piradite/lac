@@ -1,0 +1,9 @@
+one: int -> 90
+two: char -> "text"
+print "the types are:", one, two
+
+one: int -> -20
+three: char -> "woa"
+two: char -> three
+for: char -> two
+print "the types now are:", one, two, for
