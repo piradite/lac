@@ -1,0 +1,82 @@
+### Data Types
+    
+    DONE  |  int                   name: int -> 5
+    DONE  |  string                name: string -> "hi"
+    DONE  |  float                 name: float -> 5.5
+    DONE  |  bool                  name: bool -> 1/true
+    -------------
+    TODO  |  char                  name: char -> "a"
+    TODO  |  arrays                name: list -> ["one", 5, three]
+    TODO  |  tuples                name: group -> ("one", 5, three)
+    TODO  |  enum                  name: enum -> (one, two, three)
+    TODO  |  dict                  name: dict -> ("one": "two", "three": 20)
+
+
+### Var Types
+
+    TODO  |  var                   name: var int -> 5
+    TODO  |  let                   name: let int -> 3  
+    TODO  |  const                 name: const int -> 2
+    TODO  |  static                name: static int -> 10
+
+
+### Conditionals
+
+    TODO  |  if                    if a>b: ... end
+    TODO  |  case                  match a: ... 1: ... 2: ... _: ... end
+
+
+### Loops
+
+    TODO  |  for                   for i=0, i<10, i++: ... end
+    TODO  |  for each              for each one in two: ... end
+    TODO  |  while                 while a>b: ... end
+    TODO  |  do-while              do: ... while a<b end
+
+
+### Functions
+
+    TODO  |  func                  func main[one: int]: ... end
+    TODO  |  void                  void soon[two: string]: ... end
+    TODO  |  return                return smth
+    TODO  |  lamb                  name: var float -> [x: int]: x*2
+
+
+### Objects and Classes
+
+    TODO  |  class                 class main: ... end
+    TODO  |  inheritance           class main inherit two: ... end
+    TODO  |  interface             interface main: ... func one[]: ... end
+
+
+### Access Modifiers
+
+    TODO  |  public                name: public int -> 5
+    TODO  |  private               name: private int -> 3
+    TODO  |  protected             name: protected string -> "hello"
+
+
+### Memory Management
+
+    TODO  |  alloc                 name: alloc -> Memory
+    TODO  |  dealloc               dealloc name
+
+
+### Error Handling
+
+    TODO  |  try                   try: ... end
+    TODO  |  catch                 catch one: ... end
+    TODO  |  finally               finally: ... end
+    TODO  |  throw                 throw "name"
+
+
+### Modules and Imports
+
+    TODO  |  import                import one
+    TODO  |  from-import           from one import two
+    TODO  |  export                export func main[]
+
+### Comments
+
+    DONE  |  ;;                     ;;text
+    DONE  |  ;* *;                 ;*  text  *;
