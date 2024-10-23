@@ -4,8 +4,8 @@
     DONE  |  string                name: string -> "hi"
     DONE  |  float                 name: float -> 5.5
     DONE  |  bool                  name: bool -> 1/true
+    DONE  |  char                  name: char -> "a"
     -------------
-    TODO  |  char                  name: char -> "a"
     TODO  |  arrays                name: list -> ["one", 5, three]
     TODO  |  tuples                name: group -> ("one", 5, three)
     TODO  |  enum                  name: enum -> (one, two, three)
