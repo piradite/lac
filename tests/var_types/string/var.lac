@@ -1,0 +1,5 @@
+name: var string -> "hello"
+print name
+
+;;name: string -> "hello"  |  Just skips it like it never existed
+;;name: "world" |  works because its reassignment

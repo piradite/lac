@@ -1,0 +1,4 @@
+name: const string -> "hello"
+print name
+
+;;name: string -> "world"  |  Cannot change 'const' variable. It is immutable.

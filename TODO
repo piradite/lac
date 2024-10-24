@@ -14,10 +14,9 @@
 
 ### Var Types
 
-    TODO  |  var                   name: var int -> 5
-    TODO  |  let                   name: let int -> 3  
-    TODO  |  const                 name: const int -> 2
-    TODO  |  static                name: static int -> 10
+    DONE  |  var                   name: var int -> 5
+    DONE  |  let                   name: let int -> 3  
+    DONE  |  const                 name: const int -> 2
 
 
 ### Conditionals
@@ -28,6 +27,7 @@
 
 ### Loops
 
+    TODO  |  goto                  name: ... goto name
     TODO  |  for                   for i=0, i<10, i++: ... end
     TODO  |  for each              for each one in two: ... end
     TODO  |  while                 while a>b: ... end

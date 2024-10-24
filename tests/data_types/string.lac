@@ -1,0 +1,11 @@
+name: string -> "hello"
+print name 
+
+name: string -> "world"
+print name 
+
+name: "!"
+print name 
+
+two: string -> name
+print name

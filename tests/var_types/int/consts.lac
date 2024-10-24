@@ -1,0 +1,4 @@
+name: const int -> 5
+print name
+
+;;name: int -> 10  |  Cannot change 'const' variable. It is immutable.

@@ -1,0 +1,5 @@
+name: var char -> 'a'
+print name
+
+;;name: char -> 'b'  |  Just skips it like it never existed
+;;name: 'b'  |  works because its reassignment

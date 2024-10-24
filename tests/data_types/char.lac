@@ -1,0 +1,11 @@
+name: char -> 'a'
+print name 
+
+name: char -> 'b'
+print name 
+
+name: 'c'
+print name 
+
+two: char -> name
+print two

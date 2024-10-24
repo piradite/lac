@@ -1,7 +1,11 @@
 #include "executable.h"
+
 #include "util/utility.h"
+
 #include <stdio.h>
+
 #include <stdlib.h>
+
 #include <string.h>
 
 void generate_executable(const char * bytecode_file,
@@ -28,10 +32,12 @@ void generate_executable(const char * bytecode_file,
         "#include <stdio.h>\n"
         "#include <stdlib.h>\n"
         "#include <string.h>\n"
-        "typedef enum { INT, STRING, FLOAT, BOOL, CHAR } VarType;\n"
+        "typedef enum { NONE, INT, STRING, FLOAT, BOOL, CHAR } VarType;\n"
+        "typedef enum { CONST, LET, VAR } VarStorageType;\n"
         "typedef struct {\n"
         "    char name[256];\n"
         "    VarType type;\n"
+        "    VarStorageType storage_type;\n"
         "    union {\n"
         "        int int_val;\n"
         "        char string_val[256];\n"
@@ -212,9 +218,9 @@ void generate_executable(const char * bytecode_file,
         "        } else {\n"
         "            variables[index].value.char_val = value;\n"
         "        }\n"
-    "}\n"        
-        
-        "}}\n"
+        "      }\n"
+        "    }\n"
+        " }\n"
 
     );
 

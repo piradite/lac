@@ -1,0 +1,4 @@
+name: let int -> 5
+print name
+
+;;name: int -> 10 |  Cannot redeclare a 'let' variable within the same scope.

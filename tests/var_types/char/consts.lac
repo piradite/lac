@@ -1,0 +1,4 @@
+name: const char -> 'a'
+print name
+
+;;name: char -> 'b'  |  Cannot change 'const' variable. It is immutable.

@@ -1,0 +1,5 @@
+name: var bool -> true
+print name
+
+;;name: bool -> false  |  Just skips it like it never existed
+;;name: false  |  works because its reassignment
