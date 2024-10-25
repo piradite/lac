@@ -194,8 +194,7 @@ void compile_to_bytecode(const char * source_code,
                 expected_type = variables[var_index].type;
             }
 
-            while ( *ptr == ' ' || *ptr == '-' || *ptr == '>')
-                ptr++;
+            while (*ptr == ' ') ptr++;
 
             if (expected_type == INT) {
                 int int_value = 0;
@@ -204,7 +203,7 @@ void compile_to_bytecode(const char * source_code,
                 bool is_literal = isdigit(*ptr) || *ptr == '-';
 
                 if (is_literal) {
-                    int_value = atoi(ptr);
+                    int_value = strtol(ptr, (char **)&ptr, 10);
                     while (isdigit(*ptr) || *ptr == '-') ptr++;
                 } else {
                     while (isalnum(*ptr)) referenced_var_name[ref_len++] = *ptr++;
@@ -266,7 +265,7 @@ void compile_to_bytecode(const char * source_code,
                 float float_value = 0.0;
 
                 if (isdigit( *ptr) || *ptr == '-') {
-                    float_value = strtof(ptr, (char ** ) & ptr);
+                    float_value = strtof(ptr, (char **)&ptr);
 
                     if (var_index == -1) {
 

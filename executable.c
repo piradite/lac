@@ -1,12 +1,9 @@
 #include "executable.h"
-
 #include "util/utility.h"
-
 #include <stdio.h>
-
 #include <stdlib.h>
-
 #include <string.h>
+#include <stdint.h>
 
 void generate_executable(const char * bytecode_file,
     const char * output_c_file) {
@@ -32,6 +29,7 @@ void generate_executable(const char * bytecode_file,
         "#include <stdio.h>\n"
         "#include <stdlib.h>\n"
         "#include <string.h>\n"
+        "#include <stdint.h>\n"
         "typedef enum { NONE, INT, STRING, FLOAT, BOOL, CHAR } VarType;\n"
         "typedef enum { CONST, LET, VAR } VarStorageType;\n"
         "typedef struct {\n"
@@ -39,7 +37,7 @@ void generate_executable(const char * bytecode_file,
         "    VarType type;\n"
         "    VarStorageType storage_type;\n"
         "    union {\n"
-        "        int int_val;\n"
+        "        int32_t int_val;\n"
         "        char string_val[256];\n"
         "        float float_val;\n"
         "        int bool_val;\n"
@@ -104,8 +102,8 @@ void generate_executable(const char * bytecode_file,
         "            memcpy(var_name, bytecode + pc, len);\n"
         "            var_name[len] = '\\0';\n"
         "            pc += len;\n"
-        "            int value = *(int*)(bytecode + pc);\n"
-        "            pc += sizeof(int);\n"
+        "            int32_t value = *(int32_t*)(bytecode + pc);\n"
+        "            pc += sizeof(int32_t);\n"
         "            int index = find_variable_index(var_name);\n"
         "            if (index == -1) {\n"
         "                strcpy(variables[var_count].name, var_name);\n"

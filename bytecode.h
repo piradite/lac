@@ -2,6 +2,7 @@
 #define BYTECODE_H
 
 #include <stdio.h>
+#include <stdint.h>
 
 typedef enum {
     NONE,
@@ -25,7 +26,7 @@ typedef struct {
     VarType type;
     VarStorageType storage_type;
     union {
-        int int_val;
+        int32_t int_val;
         char string_val[256];
         float float_val;
         int bool_val;
