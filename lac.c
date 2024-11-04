@@ -4,7 +4,8 @@
 #include <stdlib.h>
 
 int main(int argc, char **argv) {
-    if (argc < 3) handle_error("Usage: <executable> <source file>");
+    if (argc < 3)
+	handle_error("Usage: <executable> <source file>");
 
     char *source_code = read_file(argv[2]);
     compile_to_bytecode(source_code, "/tmp/output.bytecode");

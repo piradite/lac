@@ -11,14 +11,14 @@ void handle_error(const char *message) {
 char *read_file(const char *filename) {
     FILE *file = fopen(filename, "r");
     if (!file) {
-        handle_error("Could not open file");
+	handle_error("Could not open file");
     }
     fseek(file, 0, SEEK_END);
     long length = ftell(file);
     fseek(file, 0, SEEK_SET);
     char *content = malloc(length + 1);
     if (!content) {
-        handle_error("Memory allocation failed");
+	handle_error("Memory allocation failed");
     }
     fread(content, 1, length, file);
     fclose(file);
