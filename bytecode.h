@@ -10,7 +10,8 @@ typedef enum {
     STRING,
     FLOAT,
     BOOL,
-    CHAR
+    CHAR,
+    ANY
 } VarType;
 
 typedef enum {

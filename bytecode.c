@@ -6,6 +6,7 @@
 #include "bytecode.h"
 #include "util/utility.h"
 #include "util/variables.h"
+#include "data_types/types.h"
 
 int find_variable_index(const char *var_name) {
     for (int i = 0; i < var_count; i++)
@@ -16,17 +17,24 @@ int find_variable_index(const char *var_name) {
 
 void check_variable_redefinition(int var_index, VarType new_type, VarStorageType storage_type) {
     if (var_index == -1)
-	return;
+        return;
 
     VarStorageType existing_storage = variables[var_index].storage_type;
     VarType existing_type = variables[var_index].type;
 
-    if (existing_storage == CONST)
-	handle_error("Cannot change 'const' variable. It is immutable.");
-    else if ((existing_storage == VAR || (existing_storage == LET && storage_type == LET)) && (new_type != NONE && existing_type != new_type))
-	handle_error("Type mismatch during reassignment.");
-    else if (existing_storage == LET && storage_type == LET)
-	handle_error("Cannot redeclare a 'let' variable within the same scope.");
+    if (existing_storage == CONST) {
+        handle_error("Cannot change 'const' variable. It is immutable.");
+    } else if (existing_storage == VAR && new_type != NONE &&
+               existing_type != new_type && existing_type != ANY && new_type != ANY) {
+        handle_error("Type mismatch during reassignment.");
+    } else if (existing_storage == LET) {
+        if (storage_type == LET) {
+            handle_error("Cannot redeclare a 'let' variable within the same scope.");
+        }
+        if (new_type != NONE && existing_type != new_type && existing_type != ANY && new_type != ANY) {
+            handle_error("Type mismatch during reassignment.");
+        }
+    }
 }
 
 void write_to_output(FILE *output, char byte_code, int len, const char *name, void *data, size_t data_size) {
@@ -134,145 +142,15 @@ void compile_to_bytecode(const char *source_code, const char *bytecode_file) {
 	    while (*ptr == ' ')
 		ptr++;
 
-	    switch (expected_type) {
-	    case INT:{
-		int int_value = 0;
-		char referenced_var_name[256];
-		int ref_len = 0;
-		bool is_literal = isdigit(*ptr) || *ptr == '-';
+        switch (expected_type) {
+            case INT: handle_int(output, &ptr, var_name, var_index, storage_type); break;
+            case STRING: handle_string(output, &ptr, var_name, var_index, storage_type); break;
+            case FLOAT: handle_float(output, &ptr, var_name, var_index, storage_type); break;
+            case BOOL: handle_bool(output, &ptr, var_name, var_index, storage_type); break;
+            case CHAR: handle_char(output, &ptr, var_name, var_index, storage_type); break;
+            default: handle_error("Unsupported type"); break;
+        }
 
-		if (is_literal) {
-		    int_value = strtol(ptr, (char **)&ptr, 10);
-		    while (isdigit(*ptr) || *ptr == '-')
-			ptr++;
-		} else {
-		    while (isalnum(*ptr))
-			referenced_var_name[ref_len++] = *ptr++;
-		    referenced_var_name[ref_len] = '\0';
-
-		    int referenced_var_index = find_variable_index(referenced_var_name);
-		    if (referenced_var_index == -1 || variables[referenced_var_index].type != INT) {
-			handle_error("Invalid int value, expected an int literal or another int variable.");
-		    }
-		    int_value = variables[referenced_var_index].value.int_val;
-		}
-
-		assign_variable_value(var_index, var_name, INT, storage_type, &int_value, sizeof(int));
-		write_to_output(output, 0x04, len, var_name, &int_value, sizeof(int));
-		break;
-	    }
-
-	    case STRING:{
-		if (*ptr == '"') {
-		    ptr++;
-		    const char *start = ptr;
-		    while (*ptr != '"' && *ptr != '\0')
-			ptr++;
-		    size_t len_str = ptr - start;
-		    ptr++;
-
-		    assign_variable_value(var_index, var_name, STRING, storage_type, (void *)start, len_str);
-		    fwrite(&(char) { 0x05 }, sizeof(char), 1, output);
-		    fwrite(&len, sizeof(int), 1, output);
-		    fwrite(var_name, sizeof(char), len, output);
-		    fwrite(&len_str, sizeof(int), 1, output);
-		    fwrite(start, sizeof(char), len_str, output);
-		}
-		break;
-	    }
-
-	    case FLOAT:{
-		float float_value = 0.0;
-
-		if (isdigit(*ptr) || *ptr == '-') {
-		    float_value = strtof(ptr, (char **)&ptr);
-		} else {
-		    char referenced_var_name[256];
-		    int ref_len = 0;
-		    while (isalnum(*ptr)) {
-			referenced_var_name[ref_len++] = *ptr++;
-		    }
-		    referenced_var_name[ref_len] = '\0';
-
-		    int referenced_var_index = find_variable_index(referenced_var_name);
-		    if (referenced_var_index == -1 || variables[referenced_var_index].type != FLOAT) {
-			handle_error("Invalid float value, expected a float literal or another float variable.");
-		    }
-		    float_value = variables[referenced_var_index].value.float_val;
-		}
-
-		assign_variable_value(var_index, var_name, FLOAT, storage_type, &float_value, sizeof(char));
-		write_to_output(output, 0x08, len, var_name, &float_value, sizeof(float));
-		break;
-	    }
-
-	    case BOOL:{
-		int bool_value = 0;
-
-		if (strncmp(ptr, "true", 4) == 0) {
-		    ptr += 4;
-		    bool_value = 1;
-		} else if (strncmp(ptr, "false", 5) == 0) {
-		    ptr += 5;
-		    bool_value = 0;
-		} else {
-		    char referenced_var_name[256];
-		    int ref_len = 0;
-
-		    while (isalnum(*ptr)) {
-			referenced_var_name[ref_len++] = *ptr++;
-		    }
-		    referenced_var_name[ref_len] = '\0';
-
-		    int referenced_var_index = find_variable_index(referenced_var_name);
-		    if (referenced_var_index == -1 || variables[referenced_var_index].type != BOOL) {
-			handle_error("Invalid boolean value, expected 'true', 'false', or another boolean variable.");
-		    }
-
-		    bool_value = variables[referenced_var_index].value.bool_val;
-		}
-
-		assign_variable_value(var_index, var_name, BOOL, storage_type, &bool_value, sizeof(int));
-		write_to_output(output, 0x09, len, var_name, &bool_value, sizeof(int));
-		break;
-	    }
-
-	    case CHAR:{
-		char char_value = '\0';
-
-		if (*ptr == '\'') {
-		    ptr++;
-		    char_value = *ptr++;
-		    if (*ptr != '\'') {
-			handle_error("Invalid char value, expected a single character in quotes.");
-		    }
-		    ptr++;
-		} else {
-		    char referenced_var_name[256];
-		    int ref_len = 0;
-
-		    while (isalnum(*ptr)) {
-			referenced_var_name[ref_len++] = *ptr++;
-		    }
-		    referenced_var_name[ref_len] = '\0';
-
-		    int referenced_var_index = find_variable_index(referenced_var_name);
-		    if (referenced_var_index == -1 || variables[referenced_var_index].type != CHAR) {
-			handle_error("Invalid character value, expected a char literal or another char variable.");
-		    }
-
-		    char_value = variables[referenced_var_index].value.char_val;
-		}
-
-		assign_variable_value(var_index, var_name, CHAR, storage_type, &char_value, sizeof(char));
-		write_to_output(output, 0x0A, len, var_name, &char_value, sizeof(char));
-		break;
-	    }
-
-	    default:
-		handle_error("Unsupported type");
-		break;
-	    }
 	}
 
 	last_char = *ptr;

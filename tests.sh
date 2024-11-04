@@ -1,7 +1,7 @@
 #!/bin/bash
 exec > output.txt 2>&1
 
-gcc -o lac lac.c util/utility.c util/variables.c bytecode.c executable.c
+gcc -o lac lac.c util/utility.c util/variables.c data_types/int.c data_types/string.c data_types/float.c data_types/bool.c data_types/char.c bytecode.c executable.c
 
 if [ $? -ne 0 ]; then
     echo "Compilation failed!"
