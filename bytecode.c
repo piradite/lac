@@ -5,9 +5,7 @@
 #include <stdbool.h>
 #include "bytecode.h"
 #include "util/utility.h"
-
-Variable variables[256];
-int var_count = 0;
+#include "util/variables.h"
 
 int find_variable_index(const char * var_name) {
     for (int i = 0; i < var_count; i++)
@@ -34,6 +32,24 @@ void check_variable_redefinition(int var_index, VarType new_type, VarStorageType
     }
 }
 
+void write_to_output(FILE *output, char byte_code, int len, const char *name, void *data, size_t data_size) {
+    char buffer[512];
+    int offset = 0;
+
+    buffer[offset++] = byte_code;
+    memcpy(buffer + offset, &len, sizeof(int));
+    offset += sizeof(int);
+    memcpy(buffer + offset, name, len);
+    offset += len;
+
+    if (data != NULL && data_size > 0) {
+        memcpy(buffer + offset, data, data_size);
+        offset += data_size;
+    }
+
+    fwrite(buffer, sizeof(char), offset, output);
+}
+
 void compile_to_bytecode(const char * source_code,
     const char * bytecode_file) {
     FILE * output = fopen(bytecode_file, "wb");
@@ -55,78 +71,77 @@ void compile_to_bytecode(const char * source_code,
 
         if (strncmp(ptr, "print", 5) == 0) {
             ptr += 5;
-            while ( *ptr == ' ' || *ptr == '\t') ptr++;
+            while (*ptr == ' ' || *ptr == '\t') ptr++;
+    
             int first_item = 1;
-
-            while ( *ptr && *ptr != '\n') {
+            while (*ptr && *ptr != '\n') {
                 has_content = 1;
-                if ( *ptr == '"') {
-                    if (!first_item && !last_was_newline) fwrite(&(char){0x06}, sizeof(char), 1, output);
+                if (*ptr == '"') {
+                    if (!first_item && !last_was_newline) write_to_output(output, 0x06, 0, NULL, NULL, 0);
                     first_item = last_was_newline = 0;
 
                     fwrite(&(char){0x01}, sizeof(char), 1, output);
-                    const char * start = ++ptr;
-
-                    while ( *ptr != '"' && *ptr) ptr++;
+                    const char *start = ++ptr;
+                    while (*ptr != '"' && *ptr) ptr++;
                     size_t len = ptr - start;
                     fwrite(&len, sizeof(size_t), 1, output);
                     fwrite(start, sizeof(char), len, output);
                     ptr++;
-                } else if (isalnum( *ptr)) {
-                    if (!first_item && !last_was_newline) fwrite(&(char){0x06}, sizeof(char), 1, output);
-                    first_item = last_was_newline = 0;
+        } else if (isalnum(*ptr)) {
+            if (!first_item && !last_was_newline) write_to_output(output, 0x06, 0, NULL, NULL, 0);
+            first_item = last_was_newline = 0;
 
-                    char var_name[256];
-                    int len = 0;
+            char var_name[256];
+            int len = 0;
+            while (isalnum(*ptr)) var_name[len++] = *ptr++;
+            var_name[len] = '\0';
 
-                    while (isalnum( *ptr)) var_name[len++] = *ptr++;
-                    var_name[len] = '\0';
+            int var_index = find_variable_index(var_name);
+            if (var_index == -1) handle_error("Variable not declared");
 
-                    int var_index = find_variable_index(var_name);
-                    if (var_index == -1) handle_error("Variable not declared");
-
-                    if (variables[var_index].type == STRING) {
-                        fwrite(&(char){0x01}, sizeof(char), 1, output);
-                        size_t str_len = strlen(variables[var_index].value.string_val);
-                        fwrite(&str_len, sizeof(size_t), 1, output);
-                        fwrite(variables[var_index].value.string_val, sizeof(char), str_len, output);
-                    } else {
-                        fwrite(&(char){0x03}, sizeof(char), 1, output);
-                        fwrite(&len, sizeof(int), 1, output);
-                        fwrite(var_name, sizeof(char), len, output);
-                    }
-
-                    while ( *ptr == ' ' || *ptr == ':') ptr++;
-                    if ( *ptr == '"') {
-                        ptr++;
-                        const char * start = ptr;
-                        while ( *ptr != '"' && *ptr) ptr++;
-                        size_t len_str = ptr - start;
-                        ptr++;
-
-                        if (variables[var_index].type != STRING) handle_error("Type mismatch during reassignment.");
-                        if (len_str >= sizeof(variables[var_index].value.string_val)) handle_error("String value exceeds allocated space.");
-
-                        strncpy(variables[var_index].value.string_val, start, len_str);
-                        variables[var_index].value.string_val[len_str] = '\0';
-
-                        fwrite(&(char){0x05}, sizeof(char), 1, output);
-                        fwrite(&len, sizeof(int), 1, output);
-                        fwrite(var_name, sizeof(char), len, output);
-                        fwrite(&len_str, sizeof(int), 1, output);
-                        fwrite(start, sizeof(char), len_str, output);
-                    }
-                }
-
-                if ( *ptr == ',') ptr++;
-                while ( *ptr == ' ' || *ptr == '\t') ptr++;
+            if (variables[var_index].type == STRING) {
+                fwrite(&(char){0x01}, sizeof(char), 1, output);
+                size_t str_len = strlen(variables[var_index].value.string_val);
+                fwrite(&str_len, sizeof(size_t), 1, output);
+                fwrite(variables[var_index].value.string_val, sizeof(char), str_len, output);
+            } else {
+                fwrite(&(char){0x03}, sizeof(char), 1, output);
+                fwrite(&len, sizeof(int), 1, output);
+                fwrite(var_name, sizeof(char), len, output);
             }
 
-            if ( *ptr == '\n' && ptr[1]) {
-                fwrite(&(char){0x02}, sizeof(char), 1, output);
-                last_was_newline = 1;
+            while (*ptr == ' ' || *ptr == ':') ptr++;
+            if (*ptr == '"') {
+                ptr++;
+                const char *start = ptr;
+                while (*ptr != '"' && *ptr) ptr++;
+                size_t len_str = ptr - start;
+                ptr++;
+
+                if (variables[var_index].type != STRING) handle_error("Type mismatch during reassignment.");
+                if (len_str >= sizeof(variables[var_index].value.string_val)) handle_error("String value exceeds allocated space.");
+
+                strncpy(variables[var_index].value.string_val, start, len_str);
+                variables[var_index].value.string_val[len_str] = '\0';
+
+                fwrite(&(char){0x05}, sizeof(char), 1, output);
+                fwrite(&len, sizeof(int), 1, output);
+                fwrite(var_name, sizeof(char), len, output);
+                fwrite(&len_str, sizeof(int), 1, output);
+                fwrite(start, sizeof(char), len_str, output);
             }
-        } else if (isalpha( *ptr)) {
+        }
+
+        if (*ptr == ',') ptr++;
+        while (*ptr == ' ' || *ptr == '\t') ptr++;
+    }
+
+    if (*ptr == '\n' && ptr[1]) {
+        fwrite(&(char){0x02}, sizeof(char), 1, output);
+        last_was_newline = 1;
+    }
+}
+ else if (isalpha( *ptr)) {
             char var_name[256];
             int len = 0;
             VarStorageType storage_type = VAR;
@@ -196,7 +211,8 @@ void compile_to_bytecode(const char * source_code,
 
             while (*ptr == ' ') ptr++;
 
-            if (expected_type == INT) {
+        switch (expected_type) {
+            case INT: {
                 int int_value = 0;
                 char referenced_var_name[256];
                 int ref_len = 0;
@@ -216,81 +232,38 @@ void compile_to_bytecode(const char * source_code,
                     int_value = variables[referenced_var_index].value.int_val;
                 }
 
-                if (var_index == -1) {
-                    strcpy(variables[var_count].name, var_name);
-                    variables[var_count].type = INT;
-                    variables[var_count].storage_type = storage_type;
-                    variables[var_count++].value.int_val = int_value;
-                } else if (variables[var_index].type == INT) {
-                    variables[var_index].value.int_val = int_value;
-                } else {
-                    handle_error("Type mismatch in redeclaration");
-                }
+                assign_variable_value(var_index, var_name, INT, storage_type, &int_value, sizeof(int));
+                write_to_output(output, 0x04, len, var_name, &int_value, sizeof(int));
+                break;
+            }
 
-                fwrite(&(char){0x04}, sizeof(char), 1, output);
-                fwrite(&len, sizeof(int), 1, output);
-                fwrite(var_name, sizeof(char), len, output);
-                fwrite(&int_value, sizeof(int), 1, output);
-
-            } else if (expected_type == STRING && *ptr == '"') {
-                ptr++;
-                const char * start = ptr;
-                while ( *ptr != '"' && *ptr != '\0')
+            case STRING: {
+                if (*ptr == '"') {
                     ptr++;
-                size_t len_str = ptr - start;
-                ptr++;
+                    const char *start = ptr;
+                    while (*ptr != '"' && *ptr != '\0') ptr++;
+                    size_t len_str = ptr - start;
+                    ptr++;
 
-                if (var_index == -1) {
-                    strcpy(variables[var_count].name, var_name);
-                    variables[var_count].type = STRING;
-                    variables[var_count].storage_type = storage_type;
-                    strncpy(variables[var_count++].value.string_val, start, len_str);
-                    variables[var_count - 1].value.string_val[len_str] = '\0';
-                } else {
-                    if (variables[var_index].type != STRING) {
-                        handle_error("Type mismatch in redeclaration");
-                    }
-
-                    memset(variables[var_index].value.string_val, 0, sizeof(variables[var_index].value.string_val));
-                    strncpy(variables[var_index].value.string_val, start, len_str);
-                    variables[var_index].value.string_val[len_str] = '\0';
+                    assign_variable_value(var_index, var_name, STRING, storage_type, (void *)start, len_str);
+                    fwrite(&(char){0x05}, sizeof(char), 1, output);
+                    fwrite(&len, sizeof(int), 1, output);
+                    fwrite(var_name, sizeof(char), len, output);
+                    fwrite(&len_str, sizeof(int), 1, output);
+                    fwrite(start, sizeof(char), len_str, output);
                 }
+                break;
+            }
 
-                fwrite(&(char){0x05}, sizeof(char), 1, output);
-                fwrite( & len, sizeof(int), 1, output);
-                fwrite(var_name, sizeof(char), len, output);
-                fwrite( & len_str, sizeof(int), 1, output);
-                fwrite(start, sizeof(char), len_str, output);
-            } else if (expected_type == FLOAT) {
+            case FLOAT: {
                 float float_value = 0.0;
 
-                if (isdigit( *ptr) || *ptr == '-') {
+                if (isdigit(*ptr) || *ptr == '-') {
                     float_value = strtof(ptr, (char **)&ptr);
-
-                    if (var_index == -1) {
-
-                        strcpy(variables[var_count].name, var_name);
-                        variables[var_count].type = FLOAT;
-                        variables[var_count].storage_type = storage_type;
-                        variables[var_count++].value.float_val = float_value;
-                    } else {
-
-                        if (variables[var_index].type != FLOAT) {
-                            handle_error("Type mismatch in redeclaration");
-                        }
-                        variables[var_index].value.float_val = float_value;
-                    }
-
-                    fwrite(&(char){0x08}, sizeof(char), 1, output);
-                    fwrite( & len, sizeof(int), 1, output);
-                    fwrite(var_name, sizeof(char), len, output);
-                    fwrite( & float_value, sizeof(float), 1, output);
                 } else {
-
                     char referenced_var_name[256];
                     int ref_len = 0;
-
-                    while (isalnum( *ptr)) {
+                    while (isalnum(*ptr)) {
                         referenced_var_name[ref_len++] = *ptr++;
                     }
                     referenced_var_name[ref_len] = '\0';
@@ -299,29 +272,15 @@ void compile_to_bytecode(const char * source_code,
                     if (referenced_var_index == -1 || variables[referenced_var_index].type != FLOAT) {
                         handle_error("Invalid float value, expected a float literal or another float variable.");
                     }
-
                     float_value = variables[referenced_var_index].value.float_val;
-
-                    if (var_index == -1) {
-
-                        strcpy(variables[var_count].name, var_name);
-                        variables[var_count].type = FLOAT;
-                        variables[var_count].storage_type = storage_type;
-                        variables[var_count++].value.float_val = float_value;
-                    } else {
-
-                        if (variables[var_index].type != FLOAT) {
-                            handle_error("Type mismatch in redeclaration");
-                        }
-                        variables[var_index].value.float_val = float_value;
-                    }
-
-                    fwrite(&(char){0x08}, sizeof(char), 1, output);
-                    fwrite( & len, sizeof(int), 1, output);
-                    fwrite(var_name, sizeof(char), len, output);
-                    fwrite( & float_value, sizeof(float), 1, output);
                 }
-            } else if (expected_type == BOOL) {
+
+                assign_variable_value(var_index, var_name, FLOAT, storage_type, &float_value, sizeof(char));
+                write_to_output(output, 0x08, len, var_name, &float_value, sizeof(float));
+                break;
+            }
+
+            case BOOL: {
                 int bool_value = 0;
 
                 if (strncmp(ptr, "true", 4) == 0) {
@@ -334,7 +293,7 @@ void compile_to_bytecode(const char * source_code,
                     char referenced_var_name[256];
                     int ref_len = 0;
 
-                    while (isalnum( *ptr)) {
+                    while (isalnum(*ptr)) {
                         referenced_var_name[ref_len++] = *ptr++;
                     }
                     referenced_var_name[ref_len] = '\0';
@@ -347,56 +306,26 @@ void compile_to_bytecode(const char * source_code,
                     bool_value = variables[referenced_var_index].value.bool_val;
                 }
 
-                if (var_index == -1) {
-                    strcpy(variables[var_count].name, var_name);
-                    variables[var_count].type = BOOL;
-                    variables[var_count].storage_type = storage_type;
-                    variables[var_count++].value.bool_val = bool_value;
-                } else {
-                    if (variables[var_index].type != BOOL) {
-                        handle_error("Type mismatch in redeclaration");
-                    }
-                    variables[var_index].value.bool_val = bool_value;
-                }
+                assign_variable_value(var_index, var_name, BOOL, storage_type, &bool_value, sizeof(int));
+                write_to_output(output, 0x09, len, var_name, &bool_value, sizeof(int));
+                break;
+            }
 
-                fwrite(&(char){0x09}, sizeof(char), 1, output);
-                fwrite( & len, sizeof(int), 1, output);
-                fwrite(var_name, sizeof(char), len, output);
-                fwrite( & bool_value, sizeof(int), 1, output);
-
-                if (var_index == -1) {
-                    strcpy(variables[var_count].name, var_name);
-                    variables[var_count].type = BOOL;
-                    variables[var_count].storage_type = storage_type;
-                    variables[var_count++].value.bool_val = bool_value;
-                } else {
-                    if (variables[var_index].type != BOOL) {
-                        handle_error("Type mismatch in redeclaration");
-                    }
-                    variables[var_index].value.bool_val = bool_value;
-                }
-
-                fwrite(&(char){0x09}, sizeof(char), 1, output);
-                fwrite( & len, sizeof(int), 1, output);
-                fwrite(var_name, sizeof(char), len, output);
-                fwrite( & bool_value, sizeof(int), 1, output);
-            } else if (expected_type == CHAR) {
+            case CHAR: {
                 char char_value = '\0';
 
-                if ( *ptr == '\'') {
+                if (*ptr == '\'') {
                     ptr++;
                     char_value = *ptr++;
-                    if ( *ptr == '\'') {
-                        ptr++;
-                    } else {
+                    if (*ptr != '\'') {
                         handle_error("Invalid char value, expected a single character in quotes.");
                     }
+                    ptr++;
                 } else {
-
                     char referenced_var_name[256];
                     int ref_len = 0;
 
-                    while (isalnum( *ptr)) {
+                    while (isalnum(*ptr)) {
                         referenced_var_name[ref_len++] = *ptr++;
                     }
                     referenced_var_name[ref_len] = '\0';
@@ -409,30 +338,23 @@ void compile_to_bytecode(const char * source_code,
                     char_value = variables[referenced_var_index].value.char_val;
                 }
 
-                if (var_index == -1) {
-                    strcpy(variables[var_count].name, var_name);
-                    variables[var_count].type = CHAR;
-                    variables[var_count].storage_type = storage_type;
-                    variables[var_count++].value.char_val = char_value;
-                } else {
-                    if (variables[var_index].type != CHAR) {
-                        handle_error("Type mismatch in redeclaration");
-                    }
-                    variables[var_index].value.char_val = char_value;
-                }
-
-                fwrite(&(char){0x0A}, sizeof(char), 1, output);
-                fwrite( & len, sizeof(int), 1, output);
-                fwrite(var_name, sizeof(char), len, output);
-                fwrite( & char_value, sizeof(char), 1, output);
+                assign_variable_value(var_index, var_name, CHAR, storage_type, &char_value, sizeof(char));
+                write_to_output(output, 0x0A, len, var_name, &char_value, sizeof(char));
+                break;
             }
+
+            default:
+                handle_error("Unsupported type");
+                break;
         }
+    }
+
         last_char = *ptr;
         ptr++;
     }
 
     if (last_char != '\n' ? (has_content = 0, 1) : has_content) {
-        fwrite(&(char){0x02}, sizeof(char), 1, output);
+        write_to_output(output, 0x02, 0, NULL, NULL, sizeof(char));
     }
 
     fclose(output);

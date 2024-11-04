@@ -1,6 +1,7 @@
 #!/bin/bash
+exec > output.txt 2>&1
 
-gcc -o lac lac.c util/utility.c bytecode.c executable.c
+gcc -o lac lac.c util/utility.c util/variables.c bytecode.c executable.c
 
 if [ $? -ne 0 ]; then
     echo "Compilation failed!"
@@ -10,8 +11,7 @@ fi
 run_tests() {
     for file in "$1"/*.lac; do
         if [ -f "$file" ]; then
-            file_name=$(basename "$file" .lac)
-            echo "$file_name:"
+            echo "$file:"
 
             ./lac main "$file"
             ./main

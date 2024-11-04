@@ -3,9 +3,9 @@
 #include <string.h>
 #include "utility.h"
 
-void handle_error(const char *msg) {
-    fprintf(stderr, "%s\n", msg);
-    exit(1);
+void handle_error(const char *message) {
+    fprintf(stderr, "Error: %s\n", message);
+    exit(EXIT_FAILURE);
 }
 
 char *read_file(const char *filename) {
