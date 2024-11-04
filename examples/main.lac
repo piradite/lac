@@ -1,0 +1,16 @@
+;* komentarz *;
+
+rok: int -> 2024
+miesiac: string -> "listopad"
+temp: const float -> 11.23
+
+print "Temperatura:", temp. "Miesiac:", miesiac. "Rok:", rok.. ;;komentarz
+
+prawda: const bool -> true
+falsz: var bool -> false
+litera: char -> 'A'
+
+print "Prawda:", prawda. "Falsz:", falsz.
+
+falsz: true
+print litera, "teraz falsz jest", falsz
