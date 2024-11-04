@@ -34,5 +34,6 @@ typedef struct {
 
 void compile_to_bytecode(const char *source_code, const char *bytecode_file);
 int find_variable_index(const char *var_name);
+void write_to_output(FILE *output, char byte_code, int len, const char *name, void *data, size_t data_size);
 
 #endif

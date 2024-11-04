@@ -23,89 +23,25 @@ void check_variable_redefinition(int var_index, VarType new_type, VarStorageType
 
     if (existing_storage == CONST)
 	handle_error("Cannot change 'const' variable. It is immutable.");
-    else if (existing_storage == VAR && new_type != NONE && existing_type != new_type)
+    else if ((existing_storage == VAR || (existing_storage == LET && storage_type == LET)) && (new_type != NONE && existing_type != new_type))
 	handle_error("Type mismatch during reassignment.");
-    else if (existing_storage == LET) {
-	if (storage_type == LET)
-	    handle_error("Cannot redeclare a 'let' variable within the same scope.");
-	if (new_type != NONE && existing_type != new_type)
-	    handle_error("Type mismatch during reassignment.");
-    }
+    else if (existing_storage == LET && storage_type == LET)
+	handle_error("Cannot redeclare a 'let' variable within the same scope.");
 }
 
 void write_to_output(FILE *output, char byte_code, int len, const char *name, void *data, size_t data_size) {
     char buffer[512];
-    int offset = 0;
+    int offset = 1 + sizeof(int) + len + (data ? data_size : 0);
 
-    buffer[offset++] = byte_code;
-    memcpy(buffer + offset, &len, sizeof(int));
-    offset += sizeof(int);
-    memcpy(buffer + offset, name, len);
-    offset += len;
+    buffer[0] = byte_code;
+    memcpy(buffer + 1, &len, sizeof(int));
+    memcpy(buffer + 1 + sizeof(int), name, len);
 
-    if (data != NULL && data_size > 0) {
-	memcpy(buffer + offset, data, data_size);
-	offset += data_size;
+    if (data && data_size > 0) {
+	memcpy(buffer + 1 + sizeof(int) + len, data, data_size);
     }
 
-    fwrite(buffer, sizeof(char), offset, output);
-}
-
-void process_print_statement(FILE *output, const char **ptr) {
-    int first_item = 1;
-    int last_was_newline = 0;
-
-    while (**ptr && **ptr != '\n') {
-	if (**ptr == '"') {
-	    if (!first_item && !last_was_newline)
-		write_to_output(output, 0x06, 0, NULL, NULL, 0);
-	    first_item = last_was_newline = 0;
-
-	    fwrite(&(char) { 0x01 }, sizeof(char), 1, output);
-	    const char *start = ++(*ptr);
-	    while (**ptr != '"' && **ptr)
-		(*ptr)++;
-	    size_t len = *ptr - start;
-	    fwrite(&len, sizeof(size_t), 1, output);
-	    fwrite(start, sizeof(char), len, output);
-	    (*ptr)++;
-	} else if (isalnum(**ptr)) {
-	    if (!first_item && !last_was_newline)
-		write_to_output(output, 0x06, 0, NULL, NULL, 0);
-	    first_item = last_was_newline = 0;
-
-	    char var_name[256];
-	    int len = 0;
-	    while (isalnum(**ptr))
-		var_name[len++] = *(*ptr)++;
-	    var_name[len] = '\0';
-
-	    int var_index = find_variable_index(var_name);
-	    if (var_index == -1)
-		handle_error("Variable not declared");
-
-	    if (variables[var_index].type == STRING) {
-		fwrite(&(char) { 0x01 }, sizeof(char), 1, output);
-		size_t str_len = strlen(variables[var_index].value.string_val);
-		fwrite(&str_len, sizeof(size_t), 1, output);
-		fwrite(variables[var_index].value.string_val, sizeof(char), str_len, output);
-	    } else {
-		fwrite(&(char) { 0x03 }, sizeof(char), 1, output);
-		fwrite(&len, sizeof(int), 1, output);
-		fwrite(var_name, sizeof(char), len, output);
-	    }
-	}
-
-	if (**ptr == ',')
-	    (*ptr)++;
-	while (**ptr == ' ' || **ptr == '\t')
-	    (*ptr)++;
-    }
-
-    if (**ptr == '\n') {
-	fwrite(&(char) { 0x02 }, sizeof(char), 1, output);
-	last_was_newline = 1;
-    }
+    fwrite(buffer, 1, offset, output);
 }
 
 void compile_to_bytecode(const char *source_code, const char *bytecode_file) {
@@ -177,22 +113,16 @@ void compile_to_bytecode(const char *source_code, const char *bytecode_file) {
 	    while (*ptr == ' ' || *ptr == '\t')
 		ptr++;
 
-	    if (strncmp(ptr, "int ->", 6) == 0) {
-		ptr += 6;
-		expected_type = INT;
-	    } else if (strncmp(ptr, "string ->", 9) == 0) {
-		ptr += 9;
-		expected_type = STRING;
+	    const char *types[] = { "int ->", "string ->", "float ->", "bool ->", "char ->" };
+	    int expected_types[] = { INT, STRING, FLOAT, BOOL, CHAR };
+	    size_t num_types = sizeof(types) / sizeof(types[0]);
 
-	    } else if (strncmp(ptr, "float ->", 8) == 0) {
-		ptr += 8;
-		expected_type = FLOAT;
-	    } else if (strncmp(ptr, "bool ->", 7) == 0) {
-		ptr += 7;
-		expected_type = BOOL;
-	    } else if (strncmp(ptr, "char ->", 7) == 0) {
-		ptr += 7;
-		expected_type = CHAR;
+	    for (size_t i = 0; i < num_types; i++) {
+		if (strncmp(ptr, types[i], strlen(types[i])) == 0) {
+		    ptr += strlen(types[i]);
+		    expected_type = expected_types[i];
+		    break;
+		}
 	    }
 
 	    check_variable_redefinition(var_index, expected_type, storage_type);
