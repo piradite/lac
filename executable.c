@@ -55,7 +55,7 @@ void generate_executable(const char *bytecode_file, const char *output_c_file) {
         "      if (index != -1) {\n"
         "        if (variables[index].type == INT) printf(\"%%d\", variables[index].value.int_val);\n"
         "        else if (variables[index].type == STRING) printf(\"%%s\", variables[index].value.string_val);\n"
-        "        else if (variables[index].type == FLOAT) printf(\"%%.2f\", variables[index].value.float_val);\n"
+        "        else if (variables[index].type == FLOAT) printf(\"%%g\", variables[index].value.float_val);\n"
         "        else if (variables[index].type == BOOL) printf(\"%%s\", variables[index].value.bool_val ? \"true\" : \"false\");\n"
         "        else if (variables[index].type == CHAR) printf(\"%%c\", variables[index].value.char_val);\n"
         "      }\n"

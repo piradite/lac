@@ -15,22 +15,22 @@ void handle_int(FILE *output, const char **ptr, const char *var_name, int var_in
     bool is_literal = isdigit(**ptr) || **ptr == '-';
 
     if (is_literal) {
-        int_value = strtol(*ptr, (char **)ptr, 10);
-        while (isdigit(**ptr) || **ptr == '-') {
-            (*ptr)++;
-        }
+	int_value = strtol(*ptr, (char **)ptr, 10);
+	while (isdigit(**ptr) || **ptr == '-') {
+	    (*ptr)++;
+	}
     } else {
-        while (isalnum(**ptr)) {
-            referenced_var_name[ref_len++] = **ptr;
-            (*ptr)++;
-        }
-        referenced_var_name[ref_len] = '\0';
+	while (isalnum(**ptr)) {
+	    referenced_var_name[ref_len++] = **ptr;
+	    (*ptr)++;
+	}
+	referenced_var_name[ref_len] = '\0';
 
-        int referenced_var_index = find_variable_index(referenced_var_name);
-        if (referenced_var_index == -1 || variables[referenced_var_index].type != INT) {
-            handle_error("Invalid int value, expected an int literal or another int variable.");
-        }
-        int_value = variables[referenced_var_index].value.int_val;
+	int referenced_var_index = find_variable_index(referenced_var_name);
+	if (referenced_var_index == -1 || variables[referenced_var_index].type != INT) {
+	    handle_error("Invalid int value, expected an int literal or another int variable.");
+	}
+	int_value = variables[referenced_var_index].value.int_val;
     }
 
     assign_variable_value(var_index, var_name, INT, storage_type, &int_value, sizeof(int));
