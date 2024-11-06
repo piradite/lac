@@ -103,7 +103,25 @@ void process_print_statement(FILE *output, const char **ptr) {
 		(*ptr)++;
 	    }
 	    first_item = 1;
+	} else if (**ptr == '&') {
+		(*ptr)++;
+		char var_name[256];
+		int len = 0;
+		while (isalnum(**ptr)) {
+			var_name[len++] = *(*ptr)++;
+		}
+		var_name[len] = '\0';
+
+		int var_index = find_variable_index(var_name);
+		if (var_index == -1) {
+			handle_error("Variable not declared");
+		}
+
+		fwrite(&(char) { 0x0B }, 1, 1, output);
+		fwrite(&len, sizeof(int), 1, output);
+		fwrite(var_name, 1, len, output);
 	}
+
 
 	while (**ptr == ' ' || **ptr == '\t') {
 	    (*ptr)++;

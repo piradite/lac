@@ -21,7 +21,7 @@ void generate_executable(const char *bytecode_file, const char *output_c_file) {
     if (!output_fp) handle_error("Could not create C file for executable");
 
     fprintf(output_fp,
-        "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdint.h>\n"
+        "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdint.h>\n#include <unistd.h>\n"
         "typedef enum { NONE, INT, STRING, FLOAT, BOOL, CHAR } VarType;\n"
         "typedef enum { CONST, LET, VAR } VarStorageType;\n"
         "typedef struct { char name[256]; VarType type; VarStorageType storage_type;\n"
@@ -113,7 +113,23 @@ void generate_executable(const char *bytecode_file, const char *output_c_file) {
 	    "          variables[var_count++].value.char_val = value;\n" 
         "      } else {\n" 
         "          variables[index].value.char_val = value;\n" 
-        "      }\n" "      }\n" "    }\n" " }\n");
+        "      }\n" "      }\n" 
+        "   else if (instruction == 0x0B) {\n"
+        "    int len = *(int*)(bytecode + pc);\n"
+        "    pc += sizeof(int);\n"
+        "    char var_name[256];\n"
+        "    memcpy(var_name, bytecode + pc, len);\n"
+        "    var_name[len] = '\\0';\n"
+        "    pc += len;\n"
+        "    int index = find_variable_index(var_name);\n"
+        "    if (index != -1) {\n"
+        "        printf(\"%p\", (void*)&variables[index].value);\n"
+        "    }\n" " }\n"
+        "   else if (instruction == 0x0C) {\n"
+        "    int duration = *(int*)(bytecode + pc);\n"
+        "    pc += sizeof(int);\n"
+        "    sleep(duration);\n"
+        "   }\n" "    }\n" " }\n");
 
     fprintf(output_fp, "int main() {\n" 
     "    run_bytecode(bytecode, bytecode_length);\n" 

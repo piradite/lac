@@ -37,6 +37,8 @@
 
 ### Functions
 
+    DONE  |  sleep                 sleep <s>
+    -------------
     TODO  |  func                  func main[one: int]: ... end
     TODO  |  void                  void soon[two: string]: ... end
     TODO  |  return                return smth
@@ -59,6 +61,8 @@
 
 ### Memory Management
 
+    DONE  |  print address         print &name
+    -------------
     TODO  |  alloc                 name: alloc -> Memory
     TODO  |  dealloc               dealloc name
 

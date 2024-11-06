@@ -75,6 +75,18 @@ void compile_to_bytecode(const char *source_code, const char *bytecode_file) {
 	    continue;
 	}
 
+	if (strncmp(ptr, "sleep", 5) == 0 && isspace(*(ptr + 5))) {
+        ptr += 5;
+        while (*ptr == ' ' || *ptr == '\t') ptr++;
+
+        int duration = atoi(ptr);
+        fwrite(&(char){0x0C}, 1, 1, output);
+        fwrite(&duration, sizeof(int), 1, output);
+
+        while (isdigit(*ptr)) ptr++;
+        continue;
+    }
+
 	if (strncmp(ptr, "print", 5) == 0) {
 	    ptr += 5;
 	    while (*ptr == ' ' || *ptr == '\t')
