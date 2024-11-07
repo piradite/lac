@@ -76,16 +76,24 @@ void compile_to_bytecode(const char *source_code, const char *bytecode_file) {
 	}
 
 	if (strncmp(ptr, "sleep", 5) == 0 && isspace(*(ptr + 5))) {
-        ptr += 5;
-        while (*ptr == ' ' || *ptr == '\t') ptr++;
+		ptr += 5;
+		while (*ptr == ' ' || *ptr == '\t') ptr++; 
 
-        int duration = atoi(ptr);
-        fwrite(&(char){0x0C}, 1, 1, output);
-        fwrite(&duration, sizeof(int), 1, output);
+		char *non_const_ptr = (char *)ptr;
 
-        while (isdigit(*ptr)) ptr++;
-        continue;
-    }
+		double duration = strtod(non_const_ptr, &non_const_ptr);
+		ptr = non_const_ptr;
+
+		int seconds = (int)duration;
+		int milliseconds = (int)((duration - seconds) * 1000);
+
+		fwrite(&(char){0x0C}, 1, 1, output);
+		fwrite(&seconds, sizeof(int), 1, output);
+		fwrite(&milliseconds, sizeof(int), 1, output);
+
+		while (*ptr && !isspace(*ptr)) ptr++;
+		continue;
+	}
 
 	if (strncmp(ptr, "print", 5) == 0) {
 	    ptr += 5;

@@ -21,7 +21,7 @@ void generate_executable(const char *bytecode_file, const char *output_c_file) {
     if (!output_fp) handle_error("Could not create C file for executable");
 
     fprintf(output_fp,
-        "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdint.h>\n#include <unistd.h>\n"
+        "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdint.h>\n#include <time.h>\n"
         "typedef enum { NONE, INT, STRING, FLOAT, BOOL, CHAR } VarType;\n"
         "typedef enum { CONST, LET, VAR } VarStorageType;\n"
         "typedef struct { char name[256]; VarType type; VarStorageType storage_type;\n"
@@ -126,9 +126,14 @@ void generate_executable(const char *bytecode_file, const char *output_c_file) {
         "        printf(\"%p\", (void*)&variables[index].value);\n"
         "    }\n" " }\n"
         "   else if (instruction == 0x0C) {\n"
-        "    int duration = *(int*)(bytecode + pc);\n"
+        "    int seconds = *(int*)(bytecode + pc);\n"
         "    pc += sizeof(int);\n"
-        "    sleep(duration);\n"
+        "    int milliseconds = *(int*)(bytecode + pc);\n"
+        "    pc += sizeof(int);\n"
+        "    struct timespec req;\n"
+        "    req.tv_sec = seconds;\n"
+        "    req.tv_nsec = milliseconds * 1000000;\n"
+        "    nanosleep(&req, NULL);\n"
         "   }\n" "    }\n" " }\n");
 
     fprintf(output_fp, "int main() {\n" 
