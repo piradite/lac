@@ -9,37 +9,51 @@
 #include "data_types/types.h"
 
 int find_variable_index(const char *var_name) {
-    for (int i = 0; i < var_count; i++)
-	if (strcmp(var_name, variables[i].name) == 0)
-	    return i;
+    for (int i = 0; i < var_count; i++) {
+        if (strcmp(var_name, variables[i].name) == 0 && !variables[i].is_deleted) {
+            return i;
+        }
+    }
     return -1;
 }
 
 void check_variable_redefinition(int var_index, VarType new_type, VarStorageType storage_type) {
     if (var_index == -1)
-	return;
+        return;
+
+    // If the variable is marked as deleted, allow redeclaration
+    if (variables[var_index].is_deleted) {
+        // Reset the deleted flag and allow redefinition
+        variables[var_index].is_deleted = false;
+
+        // Reassign the new type and storage type since it is essentially a fresh declaration
+        variables[var_index].type = new_type;
+        variables[var_index].storage_type = storage_type;
+        return;
+    }
 
     VarStorageType existing_storage = variables[var_index].storage_type;
     VarType existing_type = variables[var_index].type;
 
     if (existing_type == ANY && new_type != NONE && new_type != ANY) {
-	variables[var_index].type = new_type;
-	return;
+        variables[var_index].type = new_type;
+        return;
     }
 
     if (existing_storage == CONST) {
-	handle_error("Cannot change 'const' variable. It is immutable.");
+        handle_error("Cannot change 'const' variable. It is immutable.");
     } else if (existing_storage == VAR && new_type != NONE && existing_type != new_type) {
-	handle_error("Type mismatch during reassignment.");
+        handle_error("Type mismatch during reassignment.");
     } else if (existing_storage == LET) {
-	if (storage_type == LET) {
-	    handle_error("Cannot redeclare a 'let' variable within the same scope.");
-	}
-	if (new_type != NONE && existing_type != new_type) {
-	    handle_error("Type mismatch during reassignment.");
-	}
+        if (storage_type == LET) {
+            handle_error("Cannot redeclare a 'let' variable within the same scope.");
+        }
+        if (new_type != NONE && existing_type != new_type) {
+            handle_error("Type mismatch during reassignment.");
+        }
     }
 }
+
 
 
 void write_to_output(FILE *output, char byte_code, int len, const char *name, void *data, size_t data_size) {
@@ -92,6 +106,24 @@ void compile_to_bytecode(const char *source_code, const char *bytecode_file) {
 		fwrite(&milliseconds, sizeof(int), 1, output);
 
 		while (*ptr && !isspace(*ptr)) ptr++;
+		continue;
+	}
+
+	if (strncmp(ptr, "delete", 6) == 0) {
+		ptr += 6;
+		while (*ptr == ' ' || *ptr == '\t')
+			ptr++;
+
+		char var_name[256];
+		int len = 0;
+		while (isalnum(*ptr))
+			var_name[len++] = *ptr++;
+		var_name[len] = '\0';
+
+		fwrite(&(char){0x0D}, 1, 1, output);
+		fwrite(&len, sizeof(int), 1, output);
+		fwrite(var_name, len, 1, output);
+
 		continue;
 	}
 

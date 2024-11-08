@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
-
+#include <stdbool.h>
 typedef enum {
     NONE,
     INT,
@@ -24,6 +24,7 @@ typedef struct {
     char name[256];
     VarType type;
     VarStorageType storage_type;
+    bool is_deleted;
     union {
 	int32_t int_val;
 	char string_val[256];

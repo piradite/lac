@@ -21,10 +21,10 @@ void generate_executable(const char *bytecode_file, const char *output_c_file) {
     if (!output_fp) handle_error("Could not create C file for executable");
 
     fprintf(output_fp,
-        "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdint.h>\n#include <time.h>\n"
+        "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdint.h>\n#include <time.h>\n#include <stdbool.h>\n"
         "typedef enum { NONE, INT, STRING, FLOAT, BOOL, CHAR } VarType;\n"
         "typedef enum { CONST, LET, VAR } VarStorageType;\n"
-        "typedef struct { char name[256]; VarType type; VarStorageType storage_type;\n"
+        "typedef struct { char name[256]; VarType type; VarStorageType storage_type;\nbool is_deleted;\n"
         "  union { int32_t int_val; char string_val[256]; float float_val; int bool_val; char char_val; } value;\n"
         "} Variable;\nVariable variables[256]; int var_count = 0;\n"
     );
@@ -35,9 +35,31 @@ void generate_executable(const char *bytecode_file, const char *output_c_file) {
     fprintf(output_fp, "};\nsize_t bytecode_length = %zu;\n", bytecode_length);
 
     fprintf(output_fp,
-        "int find_variable_index(const char* var_name) {\n"
-        "  for (int i = 0; i < var_count; i++) if (strcmp(var_name, variables[i].name) == 0) return i;\n"
-        "  return -1;\n}\n"
+        "int find_variable_index(const char *var_name) {\n"
+        "for (int i = 0; i < var_count; i++) {\n"
+        "if (strcmp(var_name, variables[i].name) == 0 && !variables[i].is_deleted) {\n"
+        "  return i;\n"
+        "}\n" "}\n"
+        "return -1;\n"
+        "}\n"
+    
+    );
+
+    fprintf(output_fp,
+    "void handle_error(const char *message) {\n"
+    "  fprintf(stderr, \"Error: %%s\\n\", message);\n"
+    "  exit(EXIT_FAILURE);\n"
+    "}\n"
+    );
+
+    fprintf(output_fp,
+    "void delete_variable(const char *var_name) {\n"
+    "  int index = find_variable_index(var_name);\n"
+    "  if (index != -1) {\n"
+    "    variables[index].is_deleted = true;\n"
+    "  } else {\n"
+    "    handle_error(\"Variable not declared\");\n"
+    "  }\n" "}\n"
     );
 
     fprintf(output_fp,
@@ -52,6 +74,9 @@ void generate_executable(const char *bytecode_file, const char *output_c_file) {
         "    else if (instruction == 0x03) { int len = *(int*)(bytecode + pc); pc += sizeof(int);\n"
         "      char var_name[256]; memcpy(var_name, bytecode + pc, len); var_name[len] = '\\0'; pc += len;\n"
         "      int index = find_variable_index(var_name);\n"
+        "      if (index == -1) {\n"
+        "        handle_error(\"Variable not found or deleted.\");\n"
+        "      }\n"
         "      if (index != -1) {\n"
         "        if (variables[index].type == INT) printf(\"%%d\", variables[index].value.int_val);\n"
         "        else if (variables[index].type == STRING) printf(\"%%s\", variables[index].value.string_val);\n"
@@ -134,7 +159,16 @@ void generate_executable(const char *bytecode_file, const char *output_c_file) {
         "    req.tv_sec = seconds;\n"
         "    req.tv_nsec = milliseconds * 1000000;\n"
         "    nanosleep(&req, NULL);\n"
-        "   }\n" "    }\n" " }\n");
+        "   }\n" 
+        "   else if (instruction == 0x0D) {\n" 
+        "    int len = *(int*)(bytecode + pc);\n"
+        "    pc += sizeof(int);\n"
+        "    char var_name[256];\n"
+        "    memcpy(var_name, bytecode + pc, len);\n"
+        "    var_name[len] = '\\0';\n"
+        "    pc += len;\n"
+        "    delete_variable(var_name);\n"
+        "}\n" "    }\n" " }\n");
 
     fprintf(output_fp, "int main() {\n" 
     "    run_bytecode(bytecode, bytecode_length);\n" 
