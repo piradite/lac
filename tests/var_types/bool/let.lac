@@ -1,4 +1,0 @@
-name: let bool -> true
-print name
-
-;;name: bool -> false  |  Cannot redeclare a 'let' variable within the same scope.

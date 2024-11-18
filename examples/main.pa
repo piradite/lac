@@ -1,0 +1,20 @@
+one: int -> 5
+two: float -> 2.6431
+three: string -> "hello"
+four: char -> 'a'
+five: list -> ["one", 5, 5.135, 'a', "world", true]
+six: group -> ("a", "bello")
+seven: enum -> (ONE: 1, TWO: 2, THREE: 3)
+
+print one. two. three. four. five. five%4.
+
+print &one. &two. &three. &four. &five. &five%3
+
+print "Group: ", six. \
+    "Element 1: ", six%1. \
+    "Element 2: ", six%2.. \
+    "Addresses: ". &six. &six%1. &six%2
+
+print &seven. \
+    &seven:ONE. \
+    &seven:ONE:value

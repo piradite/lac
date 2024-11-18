@@ -1,5 +1,0 @@
-name: var int -> 5
-print name
-
-;;name:  int -> 5  |  Just skips it like it never existed
-;;name: 10 |  works because its reassignment

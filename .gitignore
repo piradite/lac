@@ -1,9 +1,5 @@
-package.json
-.husky/
-.husky/commit-msg
-.vscode
-lac
+lac.sh
+input.pa
+ideas
 main
-main.pa
-output.txt
-ideas.txt
+output.bytecode

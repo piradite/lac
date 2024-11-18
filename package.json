@@ -1,0 +1,96 @@
+{
+    "name": "lac",
+    "version": "0.0.0",
+    "description": "",
+    "scripts": {
+        "release": "release-it"
+    },
+    "commitlint": {
+        "extends": [
+            "@commitlint/config-conventional"
+        ]
+    },
+    "lac": {
+        "type": "git",
+        "url": "git+https://github.com/piradite/lac"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/piradite/lac/issues"
+    },
+    "homepage": "https://github.com/piradite/lac#readme",
+    "dependencies": {
+        "@commitlint/cli": "^17.0.3",
+        "@commitlint/config-conventional": "^17.0.3",
+        "@release-it/conventional-changelog": "^5.0.0",
+        "husky": "^8.0.1",
+        "release-it": "^15.1.1"
+    },
+    "release-it": {
+        "git": {
+            "commitMessage": "chore: release v${version}"
+        },
+        "github": {
+            "release": true
+        },
+        "npm": {
+            "publish": false
+        },
+        "plugins": {
+            "@release-it/conventional-changelog": {
+                "infile": "CHANGELOG.md",
+                "preset": {
+                    "name": "conventionalcommits",
+                    "types": [
+                        {
+                            "type": "feat",
+                            "section": "Features"
+                        },
+                        {
+                            "type": "fix",
+                            "section": "Bug Fixes"
+                        },
+                        {
+                            "type": "docs",
+                            "section": "Documentation"
+                        },
+                        {
+                            "type": "style",
+                            "section": "Styles"
+                        },
+                        {
+                            "type": "chore",
+                            "section": "Chores"
+                        },
+                        {
+                            "type": "refactor",
+                            "section": "Code Refactoring"
+                        },
+                        {
+                            "type": "ci",
+                            "section": "Continuous Integration"
+                        },
+                        {
+                            "type": "test",
+                            "section": "Tests"
+                        },
+                        {
+                            "type": "revert",
+                            "section": "Reverts"
+                        },
+                        {
+                            "type": "perf",
+                            "section": "Performance Improvements"
+                        },
+                        {
+                            "type": "vercel",
+                            "section": "Deployments"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}

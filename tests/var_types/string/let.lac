@@ -1,4 +1,0 @@
-name: let string -> "hello"
-print name
-
-;;name: string -> "world" |  Cannot redeclare a 'let' variable within the same scope.

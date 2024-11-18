@@ -1,5 +1,0 @@
-name: var float -> 5.5
-print name
-
-;;name:  float -> 5.5  |  Just skips it like it never existed
-;;name: 10.5 |  works because its reassignment

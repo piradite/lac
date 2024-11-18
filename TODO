@@ -1,23 +1,23 @@
 ### Data Types
     
     DONE  |  int                   name: int -> 5
-    DONE  |  string                name: string -> "hi"
     DONE  |  float                 name: float -> 5.5
-    DONE  |  bool                  name: bool -> 1/true
+    DONE  |  string                name: string -> "hi"
     DONE  |  char                  name: char -> "a"
-    DONE  |  any                   name: any -> "a" 
+    DONE  |  bool                  name: bool -> 1/true
+    DONE  |  arrays                name: list -> ["one", 5, three]
+    DONE  |  tuples                name: group -> (5, 7, 11, 6235)
+    TODO  |  enum                  name: enum -> (one: 1, two: 2, three: 3)
     -------------
-    TODO  |  arrays                name: list -> ["one", 5, three]
-    TODO  |  tuples                name: group -> ("one", 5, three)
-    TODO  |  enum                  name: enum -> (one, two, three)
+    TODO  |  any                   name: any -> "a" 
     TODO  |  dict                  name: dict -> ("one": "two", "three": 20)
 
 
 ### Var Types
 
-    DONE  |  var                   name: var int -> 5
-    DONE  |  let                   name: let int -> 3  
-    DONE  |  const                 name: const int -> 2
+    TODO  |  var                   name: var int -> 5
+    TODO  |  let                   name: let int -> 3  
+    TODO  |  const                 name: const int -> 2
 
 
 ### Conditionals
@@ -37,8 +37,9 @@
 
 ### Functions
 
-    DONE  |  sleep                 sleep <s>
+    DONE  |  print                 print name
     -------------
+    TODO  |  sleep                 sleep <s>
     TODO  |  func                  func main[one: int]: ... end
     TODO  |  void                  void soon[two: string]: ... end
     TODO  |  return                return smth

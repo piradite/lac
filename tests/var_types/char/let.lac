@@ -1,4 +1,0 @@
-name: let char -> 'a'
-print name
-
-;;name: char -> 'b'  |  Cannot redeclare a 'let' variable within the same scope.

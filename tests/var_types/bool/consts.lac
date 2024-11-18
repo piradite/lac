@@ -1,4 +1,0 @@
-name: const bool -> true
-print name
-
-;;name: bool -> false  |  Cannot change 'const' variable. It is immutable.
